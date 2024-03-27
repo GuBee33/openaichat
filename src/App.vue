@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import OpenAI from 'openai'
 // @ts-ignore
-import { ChatCompletionCreateParamsBase,ChatCompletionMessage } from 'openai'
+import { ChatCompletionCreateParamsBase, ChatCompletionMessage } from 'openai'
 import { useEventBus } from '@vueuse/core'
 import ChatInput from './components/ChatInput.vue'
 import ChatNavigation from './components/ChatNavigation.vue'
@@ -58,7 +58,7 @@ async function postOpenAI() {
             ', ',
         )})`
         chatStore.chatMessages.last!.role = role as 'function'
-        ;(chatStore.chatMessages.last! as ChatCompletionMessage).functionCall =
+            ; (chatStore.chatMessages.last! as ChatCompletionMessage).functionCall =
             {
                 name: fnName,
                 arguments: argsString,
@@ -81,11 +81,11 @@ async function communicateMessage() {
     const messages = (
         allMessages.length > MAX_HISTORY
             ? [
-                  chatStore.chatMessages[0],
-                  ...allMessages.slice(
-                      chatStore.chatMessages.length - MAX_HISTORY,
-                  ),
-              ]
+                chatStore.chatMessages[0],
+                ...allMessages.slice(
+                    chatStore.chatMessages.length - MAX_HISTORY,
+                ),
+            ]
             : allMessages
     ).map(msg => ({ ...msg, showmd: undefined }))
 
@@ -95,7 +95,7 @@ async function communicateMessage() {
         dangerouslyAllowBrowser: true,
     })
 
-    const events = client.chat.completions.create({
+    const events = await client.chat.completions.create({
         model: behaviorStore.deployment,
         messages,
         stream: true,
@@ -111,7 +111,7 @@ async function communicateMessage() {
     let fnName = ''
     let argsString = ''
     let role = ''
-// @ts-ignore
+    // @ts-ignore
     for await (const event of events) {
         for (const choice of event.choices) {
             if (!choice.delta) continue
@@ -143,21 +143,14 @@ async function communicateMessage() {
 
 <template>
     <div class="h-screen flex flex-column">
-        <header
-            class="fixed header flex align-items-center justify-content-center"
-        ></header>
+        <header class="fixed header flex align-items-center justify-content-center"></header>
         <Splitter class="splitter flex flex-grow-1 h-screen">
-            <SplitterPanel
-                :size="15"
-                class="flex flex-column align-items-start justify-content-start p-2 overflow-y-auto min-w-min"
-            >
+            <SplitterPanel :size="15"
+                class="flex flex-column align-items-start justify-content-start p-2 overflow-y-auto min-w-min">
                 <h1>OpenAI ChatBot</h1>
                 <ChatNavigation />
             </SplitterPanel>
-            <SplitterPanel
-                :size="85"
-                class="-grid p-2 grid-rows-1-min"
-            >
+            <SplitterPanel :size="85" class="-grid p-2 grid-rows-1-min">
                 <ChatPanel />
                 <ChatInput @send-message="sendMessage"></ChatInput>
             </SplitterPanel>
@@ -227,6 +220,7 @@ textarea {
     cursor: pointer;
     transition: all 0.2s ease-out;
     text-shadow: 0 0 0px black;
+
     &:hover {
         color: rgb(255, 107, 107);
         text-shadow: 0 0 10px rgb(255 0 0 / 0.5);
@@ -249,6 +243,7 @@ textarea {
 
 .grid-1 {
     grid-template-columns: 1fr;
+
     &-min {
         grid-template-columns: 1fr min-content;
     }
