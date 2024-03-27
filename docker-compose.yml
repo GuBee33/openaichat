@@ -1,0 +1,14 @@
+version: "3.0"
+
+services:
+  chatbot:
+    container_name: ChatBot
+    build:
+      context: .
+      dockerfile: dockerfile
+      args:
+        ARTIFACTORY_AUTH: ${ARTIFACTORY_AUTH}
+        VITE_OPENAI_ENDPOINT: ${VITE_OPENAI_ENDPOINT}
+        VITE_OPENAI_KEY: ${VITE_OPENAI_KEY}
+        VITE_BASE_PATH: ${VITE_BASE_PATH}
+    image: ${DOCKER_REGISTRY}/azureopenaichatbot:latest

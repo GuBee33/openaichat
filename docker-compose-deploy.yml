@@ -1,0 +1,9 @@
+version: "3.0"
+
+services:
+  chatbot:
+    container_name: ChatBot
+    restart: always
+    image: ${DOCKER_REGISTRY}/azureopenaichatbot:latest
+    ports:
+      - "${CLIENT_PORT}:80"
