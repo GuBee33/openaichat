@@ -49,7 +49,7 @@ const postMessage = useEventBus<void>(POST_MESSAGE_KEY)
                     class="pi hover:text-primary-500 pi-copy cursor-pointer"
                     :class="{ 'pi-check': copied }"
                     v-tooltip="'Copy the whole message'"
-                    @click="copy(message.content ?? '')"
+                    @click="copy(((typeof message.content)==='object')?message.content[0].text:message.content ?? '')"
                 />
                 <i
                     class="pi pi-refresh hover:text-primary-500 cursor-pointer"
@@ -73,12 +73,12 @@ const postMessage = useEventBus<void>(POST_MESSAGE_KEY)
 
             <ProgressSpinner
                 class="img-bot aspect-1"
-                v-if="!message.content"
+                v-if="!(((typeof message.content)==='object')?message.content[0].text:message.content)"
             />
             <div
                 v-else-if="message.showmd"
                 v-html="
-                    (message.content && converter.makeHtml(message.content)) ||
+                    (((typeof message.content)==='object')?message.content[0].text:message.content && converter.makeHtml(((typeof message.content)==='object')?message.content[0].text:message.content)) ||
                     ''
                 "
                 class="break-spaces md-block"
@@ -86,7 +86,7 @@ const postMessage = useEventBus<void>(POST_MESSAGE_KEY)
             <div
                 v-else
                 class="break-spaces"
-                >{{ message.content }}</div
+                >{{ ((typeof message.content)==='object')?message.content[0].text:message.content }}</div
             >
         </Fieldset>
     </div>

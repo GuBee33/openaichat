@@ -8,7 +8,7 @@ import ChatNavigation from './components/ChatNavigation.vue'
 import ChatPanel from './components/ChatPanel.vue'
 import { useBehaviorStore } from './data/behaviorStore'
 import { useChatStore } from './data/chatStore'
-import { MAX_HISTORY } from './data/defaults'
+import { MAX_HISTORY,FUNCTION_CALLABLE_MODELS } from './data/defaults'
 import { POST_MESSAGE_KEY } from './keys'
 import { availableFunctions } from './utils/functions'
 
@@ -18,14 +18,25 @@ const chatStore = useChatStore()
 const behaviorStore = useBehaviorStore()
 useEventBus<void>(POST_MESSAGE_KEY).on(postOpenAI)
 
-function sendMessage(prompt: string) {
-    if (!prompt) return
-
-    chatStore.newMessage({
-        content: prompt,
+function sendMessage(text: string, image_url: string) {
+    if (!text) return
+    const textContent = { type: 'text', text }
+    const imageContent = {
+        type: 'image_url',
+        image_url: {
+            url: image_url,
+        },
+    }
+    const content =
+        image_url && behaviorStore.deployment.includes('vision')
+            ? [textContent, imageContent]
+            : [textContent]
+    const message = {
+        content,
         role: 'user',
         showmd: false,
-    })
+    }
+    chatStore.newMessage(message)
     postOpenAI()
 }
 
@@ -58,7 +69,7 @@ async function postOpenAI() {
             ', ',
         )})`
         chatStore.chatMessages.last!.role = role as 'function'
-            ; (chatStore.chatMessages.last! as ChatCompletionMessage).functionCall =
+        ;(chatStore.chatMessages.last! as ChatCompletionMessage).functionCall =
             {
                 name: fnName,
                 arguments: argsString,
@@ -81,25 +92,31 @@ async function communicateMessage() {
     const messages = (
         allMessages.length > MAX_HISTORY
             ? [
-                chatStore.chatMessages[0],
-                ...allMessages.slice(
-                    chatStore.chatMessages.length - MAX_HISTORY,
-                ),
-            ]
+                  chatStore.chatMessages[0],
+                  ...allMessages.slice(
+                      chatStore.chatMessages.length - MAX_HISTORY,
+                  ),
+              ]
             : allMessages
     ).map(msg => ({ ...msg, showmd: undefined }))
-
 
     const client = new OpenAI({
         apiKey: openaiKey, // This is the default and can be omitted
         dangerouslyAllowBrowser: true,
     })
-
+    const options =
+        behaviorStore.deployment in FUNCTION_CALLABLE_MODELS
+            ? chatStore.activeChat.options
+            : {
+                  ...chatStore.activeChat.options,
+                  function_call: undefined,
+                  functions: undefined,
+              }
     const events = await client.chat.completions.create({
         model: behaviorStore.deployment,
         messages,
         stream: true,
-        ...chatStore.activeChat.options,
+        ...options,
     })
 
     chatStore.newMessage({
@@ -143,14 +160,21 @@ async function communicateMessage() {
 
 <template>
     <div class="h-screen flex flex-column">
-        <header class="fixed header flex align-items-center justify-content-center"></header>
+        <header
+            class="fixed header flex align-items-center justify-content-center"
+        ></header>
         <Splitter class="splitter flex flex-grow-1 h-screen">
-            <SplitterPanel :size="15"
-                class="flex flex-column align-items-start justify-content-start p-2 overflow-y-auto min-w-min">
+            <SplitterPanel
+                :size="15"
+                class="flex flex-column align-items-start justify-content-start p-2 overflow-y-auto min-w-min"
+            >
                 <h1>OpenAI ChatBot</h1>
                 <ChatNavigation />
             </SplitterPanel>
-            <SplitterPanel :size="85" class="-grid p-2 grid-rows-1-min">
+            <SplitterPanel
+                :size="85"
+                class="-grid p-2 grid-rows-1-min"
+            >
                 <ChatPanel />
                 <ChatInput @send-message="sendMessage"></ChatInput>
             </SplitterPanel>

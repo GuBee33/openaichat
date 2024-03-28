@@ -1,9 +1,10 @@
 // @ts-ignore
-import  {ChatCompletionMessage,ChatCompletion} from 'openai'
+import  {ChatCompletionMessage,ChatCompletion,ChatCompletionContentPart} from 'openai'
+
 
 export type Message = ChatCompletionMessage & {
     showmd?: boolean
-} & { content?: string }
+} & { content?: string|ChatCompletionContentPart }
 
 export interface SystemMessage {
     name: string

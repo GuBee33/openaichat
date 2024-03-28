@@ -65,6 +65,18 @@ export const DEFAULT_SYSTEM_MESSAGES: readonly SystemMessage[] = [
     },
 ]
 
+export const FUNCTION_CALLABLE_MODELS = [
+    'gpt-4',
+    'gpt-4-turbo-preview',
+    'gpt-4-0125-preview',
+    'gpt-4-1106-preview',
+    'gpt-4-0613',
+    'gpt-3.5-turbo',
+    'gpt-3.5-turbo-0125',
+    'gpt-3.5-turbo-1106',
+    'gpt-3.5-turbo-0613',
+]
+
 export const DEFAULT_OPTIONS: ChatCompletionCreateParamsBase = {
     temperature: 0.5,
     top_p: 0.95,
