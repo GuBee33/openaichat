@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useBehaviorStore } from '../data/behaviorStore'
+const behaviorStore = useBehaviorStore()
 
 const emit = defineEmits<{
     (e: 'send-message', text: string,imageUrl:string): void
@@ -43,6 +45,7 @@ function handleDrop(event: DragEvent) {
 <template>
     <footer class="relative flex">
         <Textarea
+            v-if="behaviorStore.deployment.includes('vision')"
             v-model="imageUrl"
             placeholder="Drop image here"
             style="width: 150px"
