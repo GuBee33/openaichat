@@ -8,11 +8,11 @@ import { SystemMessage } from '../models/Interfaces'
 import BehaviorCreation from './BehaviorCreation.vue'
 import OptionParameterSetter from './OptionParameterSetter.vue'
 import OpenAI from 'openai'
-const openaiKey = import.meta.env.VITE_OPENAI_KEY
 
 const behaviorStore = useBehaviorStore()
+const openaiKey = behaviorStore.apiKey
 const chatStore = useChatStore()
-const { currentBehavior, systemMessages, deployment } =
+const { currentBehavior, systemMessages, deployment, apiKey } =
     storeToRefs(behaviorStore)
 const { conversations, activeChat } = storeToRefs(chatStore)
 
@@ -85,6 +85,8 @@ function addChat() {
 <template>
     <div class="flex flex-column w-full">
         <div>
+            <span class="text-xs block default-cursor">Insert you openai API key</span>
+            <InputText v-model="apiKey" type="password" placeholder="Put here your API-key"></InputText>
             <div
                 class="w-full"
                 v-tooltip="

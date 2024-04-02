@@ -12,10 +12,10 @@ import { MAX_HISTORY,FUNCTION_CALLABLE_MODELS } from './data/defaults'
 import { POST_MESSAGE_KEY } from './keys'
 import { availableFunctions } from './utils/functions'
 
-const openaiKey = import.meta.env.VITE_OPENAI_KEY
 
 const chatStore = useChatStore()
 const behaviorStore = useBehaviorStore()
+const openaiKey = behaviorStore.apiKey
 useEventBus<void>(POST_MESSAGE_KEY).on(postOpenAI)
 
 function sendMessage(text: string, image_url: string) {

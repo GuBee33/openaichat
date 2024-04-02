@@ -9,7 +9,7 @@ export const useBehaviorStore = defineStore('behavior', () => {
         ...DEFAULT_SYSTEM_MESSAGES,
     ])
     const deployment = ref('gpt-4-turbo-preview')
-
+    const apiKey = useLocalStorage<string>('apiKey','')
     const currentBehavior = ref(systemMessages.value.first!)
 
     function addBehavior(behavior: SystemMessage): boolean {
@@ -42,5 +42,6 @@ export const useBehaviorStore = defineStore('behavior', () => {
         addBehavior,
         deleteBehavior,
         currentInitialMessages,
+        apiKey,
     }
 })
