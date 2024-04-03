@@ -86,37 +86,41 @@ const postMessage = useEventBus<void>(POST_MESSAGE_KEY)
                 "
             />
             <div
-            v-else-if="message.showmd"
-            v-html="
+                v-else-if="message.showmd"
+                v-html="
                     (typeof message.content === 'object'
-                    ? message.content[0].text
-                    : message.content &&
-                    converter.makeHtml(
-                        typeof message.content === 'object'
                         ? message.content[0].text
-                        : message.content,
-                        )) || ''
+                        : message.content &&
+                          converter.makeHtml(
+                              typeof message.content === 'object'
+                                  ? message.content[0].text
+                                  : message.content,
+                          )) || ''
                 "
                 class="break-spaces md-block"
-                ></div>
-                <div
+            ></div>
+            <div
                 v-else
                 class="break-spaces"
                 >{{
                     typeof message.content === 'object'
-                    ? message.content[0].text
-                    : message.content
+                        ? message.content[0].text
+                        : message.content
                 }}</div
             >
-            <img
+            <a
                 v-if="
                     typeof message.content === 'object' &&
                     message.content.length > 1
                 "
-                :src="message.content[1]?.image_url?.url"
-                width="256"
-                height="256"
-            />
+                target="_blank"
+                :href="message.content[1]?.image_url?.url"
+            >
+                <img
+                    :src="message.content[1]?.image_url?.url"
+                    width="256"
+                    height="256"
+            /></a>
         </Fieldset>
     </div>
 </template>
