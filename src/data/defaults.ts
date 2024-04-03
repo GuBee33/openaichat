@@ -86,3 +86,5 @@ export const DEFAULT_OPTIONS: ChatCompletionCreateParamsBase = {
     functions: availableFunctions.map(f => f.description),
     function_call: 'auto',
 }
+
+export const MODELTYPE_LIST = ['gpt-3.5', 'gpt-4' ,'dall-e']

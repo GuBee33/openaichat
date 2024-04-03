@@ -66,7 +66,7 @@ function handleDrop(event: DragEvent) {
             icon="pi pi-send"
             aria-label="send message"
             @click="sendMessage"
-            :disabled="!prompt"
+            :disabled="!prompt||!behaviorStore.deployment"
         >
         </Button>
     </footer>

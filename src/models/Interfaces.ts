@@ -11,9 +11,21 @@ export interface SystemMessage {
     code: Message[]
 }
 
+export type Models = {
+    deployment: string,
+    version: string
+}
+
+export type Deployments = {
+    modelType: string,
+    modelVersions: Models[]
+}
+
 export type Conversation = SystemMessage & {
     id: symbol
-    options: ChatCompletion
+    options: ChatCompletion,
+    type: "gpt"|"dall-e",
+    images?: string[]
 }
 
 

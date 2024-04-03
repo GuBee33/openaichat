@@ -7,9 +7,10 @@ import { MAX_HISTORY } from '../data/defaults'
 import { NEW_MESSAGE } from '../keys'
 import Message from './Message.vue'
 
+
 const newMessageEvent = useEventBus<void>(NEW_MESSAGE)
 const chatStore = useChatStore()
-const { chatMessages: messages } = storeToRefs(chatStore)
+const { chatMessages: messages} = storeToRefs(chatStore)
 
 const root = ref(null! as HTMLDivElement)
 watch(messages, scrollToBottom)

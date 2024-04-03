@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { ref, Ref } from 'vue'
+import { ref, Ref, watch } from 'vue'
 import { useBehaviorStore } from '../data/behaviorStore'
 import { useChatStore } from '../data/chatStore'
-import {DEFAULT_OPTIONS } from '../data/defaults'
-import { SystemMessage } from '../models/Interfaces'
+import { DEFAULT_OPTIONS, MODELTYPE_LIST } from '../data/defaults'
+import { SystemMessage,Deployments } from '../models/Interfaces'
 import BehaviorCreation from './BehaviorCreation.vue'
 import OptionParameterSetter from './OptionParameterSetter.vue'
 import OpenAI from 'openai'
@@ -19,15 +19,14 @@ const { conversations, activeChat } = storeToRefs(chatStore)
 const chatNameFocused = ref(false)
 const newChatName = ref('')
 
-async function getAvailableModels(): Promise<any[]> {
+async function getAvailableModels(): Promise<Deployments[]> {
     const client = new OpenAI({
         apiKey: openaiKey, // This is the default and can be omitted
         dangerouslyAllowBrowser: true,
     })
     const models = await client.models.list()
-    const availableModels: any[] | PromiseLike<any[]> = []
-    const modelTypeList = ['gpt-3.5', 'gpt-4']
-    modelTypeList.forEach(modelType => {
+    const availableModels: Deployments[] | PromiseLike<Deployments[]> = []
+    MODELTYPE_LIST.forEach(modelType => {
         const gptModels = models.data.filter(model =>
             model.id.startsWith(modelType),
         )
@@ -44,26 +43,52 @@ async function getAvailableModels(): Promise<any[]> {
 
                 return {
                     deployment: model.id,
-                    version: model.id + " (" + version + ")",
+                    version: model.id + ' (' + version + ')',
                 }
             })
 
             availableModels.push({
-                modelType: modelType + " Models",
+                modelType: modelType + ' Models',
                 modelVersions,
             })
         }
     })
-
-    // Extend this function to handle other types similarly, if needed
-
     return availableModels
 }
 
-const AVAILABLE_MODELS: Ref<any> = ref([]);
-(async () => {
-    AVAILABLE_MODELS.value = await getAvailableModels();
-})();
+const ALL_MODELS: Ref<Deployments[]> = ref([])
+;(async () => {
+    ALL_MODELS.value = await getAvailableModels()
+
+})()
+const AVAILABLE_MODELS: Ref<Deployments[]> = ref([])
+;(async () => {
+    AVAILABLE_MODELS.value = await getAvailableModels()
+    updateAvailableModels()
+})()
+
+function updateAvailableModels(){
+    AVAILABLE_MODELS.value=activeChat.value.code.some(item => {
+    if (Array.isArray(item.content)) {
+        return item.content.some(
+            (contentItem: { type: string }) => contentItem.type === 'image_url',
+        )
+    }
+    return false
+})
+    ? ALL_MODELS.value.map(modelType => ({
+    modelType: modelType.modelType,
+    modelVersions: modelType.modelVersions.filter(version => version.deployment.includes('vision')||version.deployment.includes('dall-e'))
+  })).filter(modelType => modelType.modelVersions.length > 0)
+    : ALL_MODELS.value
+    if(!AVAILABLE_MODELS.value.reduce((acc, modelType) => {
+    const deployments = modelType.modelVersions.map(version => version.deployment);
+    return acc.concat(deployments);
+  }, [] as string[]).includes(deployment.value)){
+    deployment.value=''
+    }
+}
+watch(activeChat,updateAvailableModels)
 
 function deleteBehavior(behavior: SystemMessage) {
     alert(
@@ -85,8 +110,14 @@ function addChat() {
 <template>
     <div class="flex flex-column w-full">
         <div>
-            <span class="text-xs block default-cursor">Insert you openai API key</span>
-            <InputText v-model="apiKey" type="password" placeholder="Put here your API-key"></InputText>
+            <span class="text-xs block default-cursor"
+                >Insert you openai API key</span
+            >
+            <InputText
+                v-model="apiKey"
+                type="password"
+                placeholder="Put here your API-key"
+            ></InputText>
             <div
                 class="w-full"
                 v-tooltip="
@@ -94,6 +125,7 @@ function addChat() {
                 "
             >
                 <span class="text-xs block default-cursor">Selected model</span>
+                {{ deployment }}
                 <Dropdown
                     class="w-full"
                     v-model="deployment"

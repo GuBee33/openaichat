@@ -14,6 +14,7 @@ import { DEFAULT_OPTIONS } from './defaults'
 export const useChatStore = defineStore('chat', () => {
     const behaviorStore = useBehaviorStore()
     const newMessageEvent = useEventBus<void>(NEW_MESSAGE)
+    const chatType:'gpt'|'dall-e' = behaviorStore.deployment.includes('gpt')?'gpt':'dall-e'
 
     const conversations = useLocalStorage<Conversation[]>('conversations', [
         {
@@ -21,6 +22,7 @@ export const useChatStore = defineStore('chat', () => {
             id: Symbol('chat-id'),
             code: [...behaviorStore.currentInitialMessages],
             options: DEFAULT_OPTIONS,
+            type: chatType,
         },
     ])
 
@@ -43,6 +45,7 @@ export const useChatStore = defineStore('chat', () => {
             id: Symbol('chat-id'),
             code: [...behaviorStore.currentInitialMessages],
             options,
+            type: chatType,
         }
         conversations.value.unshift(newChat)
         activeChat.value = newChat
@@ -70,6 +73,7 @@ export const useChatStore = defineStore('chat', () => {
         chatMessages.value.push(msg)
         newMessageEvent.emit()
     }
+
 
     return {
         conversations,

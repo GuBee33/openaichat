@@ -8,10 +8,9 @@ import ChatNavigation from './components/ChatNavigation.vue'
 import ChatPanel from './components/ChatPanel.vue'
 import { useBehaviorStore } from './data/behaviorStore'
 import { useChatStore } from './data/chatStore'
-import { MAX_HISTORY,FUNCTION_CALLABLE_MODELS } from './data/defaults'
+import { MAX_HISTORY, FUNCTION_CALLABLE_MODELS } from './data/defaults'
 import { POST_MESSAGE_KEY } from './keys'
 import { availableFunctions } from './utils/functions'
-
 
 const chatStore = useChatStore()
 const behaviorStore = useBehaviorStore()
@@ -37,7 +36,37 @@ function sendMessage(text: string, image_url: string) {
         showmd: false,
     }
     chatStore.newMessage(message)
-    postOpenAI()
+    if (behaviorStore.deployment.includes('gpt')) {
+        postOpenAI()
+    } else if (behaviorStore.deployment.includes('dall-e')) {
+        genImage(text)
+    }
+}
+
+async function genImage(text: string) {
+    const client = new OpenAI({
+        apiKey: openaiKey, // This is the default and can be omitted
+        dangerouslyAllowBrowser: true,
+    })
+
+    const image = await client.images.generate({
+        model: behaviorStore.deployment,
+        prompt: text,
+        // response_format: 'b64_json',
+    })
+    const textContent = { type: 'text', text: image.data[0].revised_prompt }
+    const imageContent = {
+        type: 'image_url',
+        image_url: {
+            url: image.data[0].url,
+        },
+    }
+    const message = {
+        content: [textContent, imageContent],
+        role: 'assistant',
+        showmd: false,
+    }
+    chatStore.newMessage(message)
 }
 
 async function postOpenAI() {
@@ -99,7 +128,6 @@ async function communicateMessage() {
               ]
             : allMessages
     ).map(msg => ({ ...msg, showmd: undefined }))
-
     const client = new OpenAI({
         apiKey: openaiKey, // This is the default and can be omitted
         dangerouslyAllowBrowser: true,
