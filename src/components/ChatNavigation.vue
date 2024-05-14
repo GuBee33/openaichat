@@ -20,7 +20,8 @@ const chatNameFocused = ref(false)
 const newChatName = ref('')
 
 let client: AzureOpenAI | OpenAI
-if (import.meta.env.VITE_IS_AZURE) {
+const isAzure =import.meta.env.VITE_IS_AZURE
+if (isAzure==="true") {
     client = new AzureOpenAI({
         endpoint: import.meta.env.VITE_AZURE_OPENAI_ENDPOINT,
         apiKey: import.meta.env.VITE_AZURE_OPENAI_API_KEY,
@@ -38,7 +39,7 @@ async function getAvailableModels(): Promise<Deployments[]> {
     const models = await client.models.list()
 
     const availableModels: Deployments[] | PromiseLike<Deployments[]> = []
-    if (import.meta.env.VITE_IS_AZURE) {
+    if (isAzure==="true") {
         return DEPLOYMENTS
     } else {
         MODELTYPE_LIST.forEach(modelType => {
@@ -138,10 +139,13 @@ function addChat() {
 <template>
     <div class="flex flex-column w-full">
         <div>
-            <span class="text-xs block default-cursor"
+            <span
+                v-if="isAzure==='false'"
+                class="text-xs block default-cursor"
                 >Insert you openai API key</span
             >
             <InputText
+                v-if="isAzure==='false'"
                 v-model="apiKey"
                 type="password"
                 placeholder="Put here your API-key"

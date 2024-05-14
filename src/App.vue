@@ -17,7 +17,8 @@ import { availableFunctions } from './utils/functions'
 const chatStore = useChatStore()
 const behaviorStore = useBehaviorStore()
 let client: AzureOpenAI | OpenAI
-if (import.meta.env.VITE_IS_AZURE) {
+const isAzure =import.meta.env.VITE_IS_AZURE
+if (isAzure==="true") {
     client = new AzureOpenAI({
         endpoint: import.meta.env.VITE_AZURE_OPENAI_ENDPOINT,
         apiKey: import.meta.env.VITE_AZURE_OPENAI_API_KEY,
