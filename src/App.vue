@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import OpenAI from 'openai'
+// import OpenAI from 'openai'
+import { OpenAI, AzureOpenAI } from 'openai'
+
 // @ts-ignore
 import { ChatCompletionCreateParamsBase, ChatCompletionMessage } from 'openai'
 import { useEventBus } from '@vueuse/core'
@@ -14,7 +16,21 @@ import { availableFunctions } from './utils/functions'
 
 const chatStore = useChatStore()
 const behaviorStore = useBehaviorStore()
-const openaiKey = behaviorStore.apiKey
+let client: AzureOpenAI | OpenAI
+if (import.meta.env.VITE_IS_AZURE) {
+    client = new AzureOpenAI({
+        endpoint: import.meta.env.VITE_AZURE_OPENAI_ENDPOINT,
+        apiKey: import.meta.env.VITE_AZURE_OPENAI_API_KEY,
+        apiVersion: import.meta.env.VITE_OPENAI_API_VERSION,
+        dangerouslyAllowBrowser: true,
+    })
+} else {
+    client = new OpenAI({
+        apiKey: behaviorStore.apiKey,
+        dangerouslyAllowBrowser: true,
+    })
+}
+
 useEventBus<void>(POST_MESSAGE_KEY).on(postOpenAI)
 
 function sendMessage(text: string, image_url: string) {
@@ -44,15 +60,9 @@ function sendMessage(text: string, image_url: string) {
 }
 
 async function genImage(text: string) {
-    const client = new OpenAI({
-        apiKey: openaiKey, // This is the default and can be omitted
-        dangerouslyAllowBrowser: true,
-    })
-
     const image = await client.images.generate({
         model: behaviorStore.deployment,
         prompt: text,
-        // response_format: 'b64_json',
     })
     const textContent = { type: 'text', text: image.data[0].revised_prompt }
     const imageContent = {
@@ -128,10 +138,7 @@ async function communicateMessage() {
               ]
             : allMessages
     ).map(msg => ({ ...msg, showmd: undefined }))
-    const client = new OpenAI({
-        apiKey: openaiKey, // This is the default and can be omitted
-        dangerouslyAllowBrowser: true,
-    })
+
     const options =
         behaviorStore.deployment in FUNCTION_CALLABLE_MODELS
             ? chatStore.activeChat.options
