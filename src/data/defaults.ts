@@ -88,3 +88,4 @@ export const DEFAULT_OPTIONS: ChatCompletionCreateParamsBase = {
 }
 
 export const MODELTYPE_LIST = ['gpt-3.5', 'gpt-4' ,'dall-e']
+

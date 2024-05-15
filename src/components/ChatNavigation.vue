@@ -4,13 +4,13 @@ import { ref, Ref, watch } from 'vue'
 import { useBehaviorStore } from '../data/behaviorStore'
 import { useChatStore } from '../data/chatStore'
 import { DEFAULT_OPTIONS, MODELTYPE_LIST } from '../data/defaults'
-import { SystemMessage,Deployments } from '../models/Interfaces'
+import { SystemMessage, Deployments } from '../models/Interfaces'
 import BehaviorCreation from './BehaviorCreation.vue'
 import OptionParameterSetter from './OptionParameterSetter.vue'
-import OpenAI from 'openai'
+import { OpenAI, AzureOpenAI } from 'openai'
 
 const behaviorStore = useBehaviorStore()
-const openaiKey = behaviorStore.apiKey
+// const openaiKey = behaviorStore.apiKey
 const chatStore = useChatStore()
 const { currentBehavior, systemMessages, deployment, apiKey } =
     storeToRefs(behaviorStore)
@@ -19,47 +19,63 @@ const { conversations, activeChat } = storeToRefs(chatStore)
 const chatNameFocused = ref(false)
 const newChatName = ref('')
 
-async function getAvailableModels(): Promise<Deployments[]> {
-    const client = new OpenAI({
-        apiKey: openaiKey, // This is the default and can be omitted
+let client: AzureOpenAI | OpenAI
+const isAzure =import.meta.env.VITE_IS_AZURE
+if (isAzure==="true") {
+    client = new AzureOpenAI({
+        endpoint: import.meta.env.VITE_AZURE_OPENAI_ENDPOINT,
+        apiKey: import.meta.env.VITE_AZURE_OPENAI_API_KEY,
+        apiVersion: import.meta.env.VITE_OPENAI_API_VERSION,
         dangerouslyAllowBrowser: true,
     })
-    const models = await client.models.list()
-    const availableModels: Deployments[] | PromiseLike<Deployments[]> = []
-    MODELTYPE_LIST.forEach(modelType => {
-        const gptModels = models.data.filter(model =>
-            model.id.startsWith(modelType),
-        )
+} else {
+    client = new OpenAI({
+        apiKey: behaviorStore.apiKey,
+        dangerouslyAllowBrowser: true,
+    })
+}
 
-        if (gptModels.length > 0) {
-            const modelVersions = gptModels.map(model => {
-                const version = new Date(
-                    model.created * 1000,
-                ).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
+async function getAvailableModels(): Promise<Deployments[]> {
+    const models = await client.models.list()
+
+    const availableModels: Deployments[] | PromiseLike<Deployments[]> = []
+    if (isAzure==="true") {
+        return JSON.parse(import.meta.env.VITE_AZURE_DEPLOYMENTS)
+    } else {
+        MODELTYPE_LIST.forEach(modelType => {
+            const gptModels = models.data.filter(model =>
+                model.id.startsWith(modelType),
+            )
+
+            if (gptModels.length > 0) {
+                const modelVersions = gptModels.map(model => {
+                    const version = new Date(
+                        model.created * 1000,
+                    ).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                    })
+
+                    return {
+                        deployment: model.id,
+                        version: model.id + ' (' + version + ')',
+                    }
                 })
 
-                return {
-                    deployment: model.id,
-                    version: model.id + ' (' + version + ')',
-                }
-            })
-
-            availableModels.push({
-                modelType: modelType + ' Models',
-                modelVersions,
-            })
-        }
-    })
-    return availableModels
+                availableModels.push({
+                    modelType: modelType + ' Models',
+                    modelVersions,
+                })
+            }
+        })
+        return availableModels
+    }
 }
 
 const ALL_MODELS: Ref<Deployments[]> = ref([])
 ;(async () => {
     ALL_MODELS.value = await getAvailableModels()
-
 })()
 const AVAILABLE_MODELS: Ref<Deployments[]> = ref([])
 ;(async () => {
@@ -67,28 +83,41 @@ const AVAILABLE_MODELS: Ref<Deployments[]> = ref([])
     updateAvailableModels()
 })()
 
-function updateAvailableModels(){
-    AVAILABLE_MODELS.value=activeChat.value.code.some(item => {
-    if (Array.isArray(item.content)) {
-        return item.content.some(
-            (contentItem: { type: string }) => contentItem.type === 'image_url',
-        )
-    }
-    return false
-})
-    ? ALL_MODELS.value.map(modelType => ({
-    modelType: modelType.modelType,
-    modelVersions: modelType.modelVersions.filter(version => version.deployment.includes('vision')||version.deployment.includes('dall-e'))
-  })).filter(modelType => modelType.modelVersions.length > 0)
-    : ALL_MODELS.value
-    if(!AVAILABLE_MODELS.value.reduce((acc, modelType) => {
-    const deployments = modelType.modelVersions.map(version => version.deployment);
-    return acc.concat(deployments);
-  }, [] as string[]).includes(deployment.value)){
-    deployment.value=''
+function updateAvailableModels() {
+    AVAILABLE_MODELS.value = activeChat.value.code.some(item => {
+        if (Array.isArray(item.content)) {
+            return item.content.some(
+                (contentItem: { type: string }) =>
+                    contentItem.type === 'image_url',
+            )
+        }
+        return false
+    })
+        ? ALL_MODELS.value
+              .map(modelType => ({
+                  modelType: modelType.modelType,
+                  modelVersions: modelType.modelVersions.filter(
+                      version =>
+                          version.deployment.includes('vision') ||
+                          version.deployment.includes('dall-e'),
+                  ),
+              }))
+              .filter(modelType => modelType.modelVersions.length > 0)
+        : ALL_MODELS.value
+    if (
+        !AVAILABLE_MODELS.value
+            .reduce((acc, modelType) => {
+                const deployments = modelType.modelVersions.map(
+                    version => version.deployment,
+                )
+                return acc.concat(deployments)
+            }, [] as string[])
+            .includes(deployment.value)
+    ) {
+        deployment.value = ''
     }
 }
-watch(activeChat,updateAvailableModels)
+watch(activeChat, updateAvailableModels)
 
 function deleteBehavior(behavior: SystemMessage) {
     alert(
@@ -110,10 +139,13 @@ function addChat() {
 <template>
     <div class="flex flex-column w-full">
         <div>
-            <span class="text-xs block default-cursor"
+            <span
+                v-if="isAzure==='false'"
+                class="text-xs block default-cursor"
                 >Insert you openai API key</span
             >
             <InputText
+                v-if="isAzure==='false'"
                 v-model="apiKey"
                 type="password"
                 placeholder="Put here your API-key"
