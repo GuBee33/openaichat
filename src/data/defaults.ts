@@ -89,14 +89,3 @@ export const DEFAULT_OPTIONS: ChatCompletionCreateParamsBase = {
 
 export const MODELTYPE_LIST = ['gpt-3.5', 'gpt-4' ,'dall-e']
 
-export const DEPLOYMENTS =  [
-        {
-            modelType: 'gpt-4',
-            modelVersions: [
-                {
-                    deployment: 'gpt-4-vision-preview',
-                    version: 'gpt-4-vision-preview (Nov 16, 2023)',
-                },
-            ],
-        }
-    ]

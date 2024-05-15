@@ -3,7 +3,7 @@ import { storeToRefs } from 'pinia'
 import { ref, Ref, watch } from 'vue'
 import { useBehaviorStore } from '../data/behaviorStore'
 import { useChatStore } from '../data/chatStore'
-import { DEFAULT_OPTIONS, MODELTYPE_LIST, DEPLOYMENTS } from '../data/defaults'
+import { DEFAULT_OPTIONS, MODELTYPE_LIST } from '../data/defaults'
 import { SystemMessage, Deployments } from '../models/Interfaces'
 import BehaviorCreation from './BehaviorCreation.vue'
 import OptionParameterSetter from './OptionParameterSetter.vue'
@@ -40,7 +40,7 @@ async function getAvailableModels(): Promise<Deployments[]> {
 
     const availableModels: Deployments[] | PromiseLike<Deployments[]> = []
     if (isAzure==="true") {
-        return DEPLOYMENTS
+        return JSON.parse(import.meta.env.VITE_AZURE_DEPLOYMENTS)
     } else {
         MODELTYPE_LIST.forEach(modelType => {
             const gptModels = models.data.filter(model =>
